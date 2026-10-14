@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f7fb">
+  <meta name="description" content="Рассчитайте цену после скидки, банковский кешбэк и общую экономию. Работает офлайн после первого запуска.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Скидка+">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Скидка+ — калькулятор выгоды</title>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <img class="brand-icon" src="./icons/icon-192.png" alt="" width="48" height="48">
+        <div>
+          <p class="eyebrow">ЛИЧНЫЕ ФИНАНСЫ</p>
+          <h1>Скидка<span>+</span></h1>
+        </div>
+      </div>
+      <div class="offline-badge" id="offline-badge" role="status" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="offline-label">Проверка офлайн-режима…</span>
+      </div>
+    </header>
+
+    <section class="intro" aria-labelledby="page-heading">
+      <p class="intro-kicker">Покупайте с умом</p>
+      <h2 id="page-heading">Сколько вы<br class="mobile-break"> сэкономите?</h2>
+      <p class="intro-copy">Сначала учитываем скидку магазина, затем — кешбэк банка с оставшейся суммы.</p>
+    </section>
+
+    <section class="calculator-card" aria-label="Калькулятор скидки и кешбэка">
+      <div class="section-heading">
+        <div>
+          <span class="step-label">ШАГ 01</span>
+          <h3>Цена покупки</h3>
+        </div>
+        <label class="currency-picker" for="currency">
+          <span>Валюта</span>
+          <select id="currency" aria-label="Валюта расчёта">
+            <option value="EUR">EUR €</option>
+            <option value="USD">USD $</option>
+            <option value="RUB">RUB ₽</option>
+            <option value="GBP">GBP £</option>
+            <option value="PLN">PLN zł</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="field-label" for="price">Исходная цена</label>
+      <div class="price-input-wrap">
+        <input id="price" class="price-input" type="number" inputmode="decimal" min="0" step="0.01" value="100" placeholder="0,00" autocomplete="off" aria-describedby="price-hint">
+        <span class="input-currency" id="price-currency">€</span>
+      </div>
+      <p class="field-hint" id="price-hint">Цена до скидки магазина</p>
+
+      <div class="divider"></div>
+
+      <div class="section-heading compact-heading">
+        <div>
+          <span class="step-label">ШАГ 02</span>
+          <h3>Ваша выгода</h3>
+        </div>
+        <span class="live-tag"><span aria-hidden="true">↻</span> Авторасчёт</span>
+      </div>
+
+      <div class="rate-grid">
+        <div class="rate-tile discount-tile">
+          <label class="field-label" for="discount">Скидка магазина</label>
+          <div class="rate-input-wrap">
+            <input id="discount" type="number" inputmode="decimal" min="0" max="100" step="0.1" value="10" autocomplete="off" aria-describedby="discount-hint">
+            <span class="percent-sign">%</span>
+          </div>
+          <p class="field-hint" id="discount-hint">От 0 до 100%</p>
+        </div>
+        <div class="rate-tile cashback-tile">
+          <label class="field-label" for="cashback">Кешбэк банка</label>
+          <div class="rate-input-wrap">
+            <input id="cashback" type="number" inputmode="decimal" min="0" max="99" step="0.1" value="1" autocomplete="off" aria-describedby="cashback-hint">
+            <span class="percent-sign">%</span>
+          </div>
+          <p class="field-hint" id="cashback-hint">От 0 до 99%</p>
+        </div>
+      </div>
+
+      <div class="divider result-divider"></div>
+
+      <section class="results" aria-labelledby="results-heading" aria-live="polite">
+        <div class="results-title-row">
+          <div>
+            <span class="step-label">ВАШ РЕЗУЛЬТАТ</span>
+            <h3 id="results-heading">Итог покупки</h3>
+          </div>
+          <div class="savings-pill" id="savings-percent-pill">− 10,90%</div>
+        </div>
+
+        <div class="main-result">
+          <p>Итоговая стоимость с кешбэком</p>
+          <output id="effective-cost" class="effective-cost" for="price discount cashback">89,10 €</output>
+          <p class="result-subtitle">Эффективная стоимость, если кешбэк начислен полностью</p>
+        </div>
+
+        <div class="result-lines">
+          <div class="result-line">
+            <span><span class="line-dot paid-dot" aria-hidden="true"></span>К оплате после скидки</span>
+            <output id="payable" for="price discount">90,00 €</output>
+          </div>
+          <div class="result-line">
+            <span><span class="line-dot cashback-dot" aria-hidden="true"></span>Кешбэк банка</span>
+            <output id="cashback-amount" for="price discount cashback">0,90 €</output>
+          </div>
+          <div class="result-line total-line">
+            <span>Общая экономия</span>
+            <output id="total-savings" for="price discount cashback">10,90 €</output>
+          </div>
+        </div>
+
+        <div class="savings-meter" aria-hidden="true"><span id="savings-meter-fill"></span></div>
+        <div class="meter-labels"><span>Исходная цена</span><span id="savings-meter-label">Сэкономлено 10,90%</span></div>
+      </section>
+    </section>
+
+    <aside class="note-card">
+      <div class="note-icon" aria-hidden="true">i</div>
+      <div>
+        <h3>Как считаем кешбэк</h3>
+        <p>По умолчанию кешбэк рассчитывается от суммы, фактически оплаченной после скидки. В реальности банк может применять округление, лимиты, категории покупок, исключения или считать кешбэк по другим правилам. Поэтому результат — оценка, а не гарантия начисления.</p>
+      </div>
+    </aside>
+
+    <footer class="page-footer">
+      <span>Расчёты выполняются на этом устройстве</span>
+      <button id="reset-button" class="reset-button" type="button">Сбросить значения</button>
+    </footer>
+  </main>
+  <script src="./app.js" defer></script>
+</body>
+</html>
