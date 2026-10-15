@@ -2,15 +2,18 @@
   "id": "./",
   "name": "Скидка+ — калькулятор скидки и кешбэка",
   "short_name": "Скидка+",
-  "description": "Калькулятор магазинной скидки, банковского кешбэка и общей экономии.",
+  "description": "Калькулятор скидки и банковского кешбэка с тёмной и светлой темой.",
   "lang": "ru",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f4f7fb",
-  "theme_color": "#f4f7fb",
-  "categories": ["finance", "utilities"],
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "categories": [
+    "finance",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "./icons/icon-192.png",

@@ -2,6 +2,8 @@
   "use strict";
 
   const STORAGE_KEY = "shop-discount-cashback-settings-v2";
+  const LEGACY_STORAGE_KEY = "shop-discount-cashback-settings-v1";
+  const THEME_KEY = "shop-discount-cashback-theme-v1";
   const DEFAULTS = { price: "100", discount: "10", cashback: "1", currency: "RUB" };
   const CURRENCY_SYMBOLS = { EUR: "€", USD: "$", RUB: "₽", GBP: "£", PLN: "zł" };
   const inputs = {
@@ -16,31 +18,45 @@
     cashbackAmount: document.getElementById("cashback-amount"),
     totalSavings: document.getElementById("total-savings"),
     savingsPercentPill: document.getElementById("savings-percent-pill"),
-    savingsMeterFill: document.getElementById("savings-meter-fill"),
     priceCurrency: document.getElementById("price-currency")
   };
-
-  function readSavedSettings() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (!saved || typeof saved !== "object") return { ...DEFAULTS };
-      const currency = Object.prototype.hasOwnProperty.call(CURRENCY_SYMBOLS, saved.currency) ? saved.currency : DEFAULTS.currency;
-      return {
-        price: validStoredNumber(saved.price, DEFAULTS.price, 0, 1000000000),
-        discount: validStoredNumber(saved.discount, DEFAULTS.discount, 0, 100),
-        cashback: validStoredNumber(saved.cashback, DEFAULTS.cashback, 0, 99),
-        currency
-      };
-    } catch (_) {
-      return { ...DEFAULTS };
-    }
-  }
 
   function validStoredNumber(value, fallback, min, max) {
     if (value === "") return "";
     const number = Number(value);
     if (!Number.isFinite(number)) return fallback;
     return String(Math.min(max, Math.max(min, number)));
+  }
+
+  function readSavedSettings() {
+    try {
+      const current = localStorage.getItem(STORAGE_KEY);
+      if (current) {
+        const saved = JSON.parse(current);
+        if (!saved || typeof saved !== "object") return { ...DEFAULTS };
+        return {
+          price: validStoredNumber(saved.price, DEFAULTS.price, 0, 1000000000),
+          discount: validStoredNumber(saved.discount, DEFAULTS.discount, 0, 100),
+          cashback: validStoredNumber(saved.cashback, DEFAULTS.cashback, 0, 99),
+          currency: Object.prototype.hasOwnProperty.call(CURRENCY_SYMBOLS, saved.currency) ? saved.currency : DEFAULTS.currency
+        };
+      }
+
+      // One-time migration: keep the user's numbers, but use RUB as the new default currency.
+      const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (!legacy) return { ...DEFAULTS };
+      const saved = JSON.parse(legacy);
+      const migrated = {
+        price: validStoredNumber(saved.price, DEFAULTS.price, 0, 1000000000),
+        discount: validStoredNumber(saved.discount, DEFAULTS.discount, 0, 100),
+        cashback: validStoredNumber(saved.cashback, DEFAULTS.cashback, 0, 99),
+        currency: DEFAULTS.currency
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+      return migrated;
+    } catch (_) {
+      return { ...DEFAULTS };
+    }
   }
 
   function storeSettings() {
@@ -104,7 +120,6 @@
     outputs.cashbackAmount.textContent = formatMoney(cashback);
     outputs.totalSavings.textContent = formatMoney(savings);
     outputs.savingsPercentPill.textContent = `${formatPercent(savingsRate)}%`;
-    outputs.savingsMeterFill.style.width = `${savingsRate}%`;
     outputs.priceCurrency.textContent = CURRENCY_SYMBOLS[inputs.currency.value] || inputs.currency.value;
     storeSettings();
   }
@@ -117,6 +132,27 @@
     const maximum = input.max === "" ? Number.MAX_SAFE_INTEGER : Number(input.max);
     const bounded = Math.min(maximum, Math.max(minimum, value));
     if (bounded !== value) input.value = String(bounded);
+  }
+
+  function setTheme(theme, persist = true) {
+    const next = theme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    const button = document.getElementById("theme-toggle");
+    const nextLabel = next === "dark" ? "Переключить на светлую тему" : "Переключить на тёмную тему";
+    button.setAttribute("aria-label", nextLabel);
+    button.setAttribute("title", nextLabel);
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) themeColor.setAttribute("content", next === "dark" ? "#0b1220" : "#f4f7fb");
+    if (persist) {
+      try { localStorage.setItem(THEME_KEY, next); } catch (_) { /* Theme works for this session. */ }
+    }
+  }
+
+  try {
+    const storedTheme = localStorage.getItem(THEME_KEY);
+    setTheme(storedTheme === "light" ? "light" : "dark", false);
+  } catch (_) {
+    setTheme("dark", false);
   }
 
   const restored = readSavedSettings();
@@ -134,46 +170,26 @@
   });
   inputs.currency.addEventListener("change", recalculate);
 
+  document.getElementById("theme-toggle").addEventListener("click", () => {
+    const current = document.documentElement.dataset.theme;
+    setTheme(current === "dark" ? "light" : "dark");
+  });
+
   document.getElementById("reset-button").addEventListener("click", () => {
     Object.keys(inputs).forEach((key) => { inputs[key].value = DEFAULTS[key]; });
     recalculate();
     inputs.price.focus();
   });
 
-  function updateNetworkStatus() {
-    const badge = document.getElementById("offline-badge");
-    const label = document.getElementById("offline-label");
-    if (!navigator.onLine) {
-      badge.classList.add("offline");
-      label.textContent = "Работаем офлайн";
-    } else {
-      badge.classList.remove("offline");
-      label.textContent = "Офлайн-режим готов";
-    }
-  }
-
   function registerOfflineSupport() {
-    const badge = document.getElementById("offline-badge");
-    const label = document.getElementById("offline-label");
-    if (!("serviceWorker" in navigator) || !window.isSecureContext) {
-      label.textContent = "Офлайн включится после публикации HTTPS";
-      badge.classList.remove("ready");
-      return;
-    }
-    navigator.serviceWorker.register("./sw.js", { scope: "./" })
-      .then(() => navigator.serviceWorker.ready)
-      .then(() => {
-        badge.classList.add("ready");
-        updateNetworkStatus();
-      })
-      .catch(() => {
-        label.textContent = "Не удалось включить офлайн-кеш";
-        badge.classList.remove("ready");
+    if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => {
+        // Offline support is optional; calculator features continue to work online.
       });
+    }, { once: true });
   }
 
-  window.addEventListener("online", updateNetworkStatus);
-  window.addEventListener("offline", updateNetworkStatus);
   recalculate();
   registerOfflineSupport();
 })();
