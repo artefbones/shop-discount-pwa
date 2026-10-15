@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "shop-discount-pwa-v1";
+const CACHE_NAME = "shop-discount-pwa-v2";
 const APP_FILES = [
   "./",
   "./index.html",

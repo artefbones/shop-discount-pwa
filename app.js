@@ -1,8 +1,8 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "shop-discount-cashback-settings-v1";
-  const DEFAULTS = { price: "100", discount: "10", cashback: "1", currency: "EUR" };
+  const STORAGE_KEY = "shop-discount-cashback-settings-v2";
+  const DEFAULTS = { price: "100", discount: "10", cashback: "1", currency: "RUB" };
   const CURRENCY_SYMBOLS = { EUR: "€", USD: "$", RUB: "₽", GBP: "£", PLN: "zł" };
   const inputs = {
     price: document.getElementById("price"),
@@ -17,7 +17,6 @@
     totalSavings: document.getElementById("total-savings"),
     savingsPercentPill: document.getElementById("savings-percent-pill"),
     savingsMeterFill: document.getElementById("savings-meter-fill"),
-    savingsMeterLabel: document.getElementById("savings-meter-label"),
     priceCurrency: document.getElementById("price-currency")
   };
 
@@ -104,9 +103,8 @@
     outputs.payable.textContent = formatMoney(payable);
     outputs.cashbackAmount.textContent = formatMoney(cashback);
     outputs.totalSavings.textContent = formatMoney(savings);
-    outputs.savingsPercentPill.textContent = `− ${formatPercent(savingsRate)}%`;
+    outputs.savingsPercentPill.textContent = `${formatPercent(savingsRate)}%`;
     outputs.savingsMeterFill.style.width = `${savingsRate}%`;
-    outputs.savingsMeterLabel.textContent = `Сэкономлено ${formatPercent(savingsRate)}%`;
     outputs.priceCurrency.textContent = CURRENCY_SYMBOLS[inputs.currency.value] || inputs.currency.value;
     storeSettings();
   }
